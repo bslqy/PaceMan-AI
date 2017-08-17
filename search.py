@@ -1,18 +1,23 @@
 # search.py
 # ---------
-# Licensing Information: Please do not distribute or publish solutions to this
-# project. You are free to use and extend these projects for educational
-# purposes. The Pacman AI projects were developed at UC Berkeley, primarily by
-# John DeNero (denero@cs.berkeley.edu) and Dan Klein (klein@cs.berkeley.edu).
-# For more info, see http://inst.eecs.berkeley.edu/~cs188/sp09/pacman.html
+# Licensing Information:  You are free to use or extend these projects for
+# educational purposes provided that (1) you do not distribute or publish
+# solutions, (2) you retain this notice, and (3) you provide clear
+# attribution to UC Berkeley, including a link to http://ai.berkeley.edu.
+# 
+# Attribution Information: The Pacman AI projects were developed at UC Berkeley.
+# The core projects and autograders were primarily created by John DeNero
+# (denero@cs.berkeley.edu) and Dan Klein (klein@cs.berkeley.edu).
+# Student side autograding was added by Brad Miller, Nick Hay, and
+# Pieter Abbeel (pabbeel@cs.berkeley.edu).
+
 
 """
-In search.py, you will implement generic search algorithms which are called
-by Pacman agents (in searchAgents.py).
+In search.py, you will implement generic search algorithms which are called by
+Pacman agents (in searchAgents.py).
 """
 
 import util
-from game import Directions
 
 class SearchProblem:
     """
@@ -24,7 +29,7 @@ class SearchProblem:
 
     def getStartState(self):
         """
-        Returns the start state for the search problem
+        Returns the start state for the search problem.
         """
         util.raiseNotDefined()
 
@@ -32,7 +37,7 @@ class SearchProblem:
         """
           state: Search state
 
-        Returns True if and only if the state is a valid goal state
+        Returns True if and only if the state is a valid goal state.
         """
         util.raiseNotDefined()
 
@@ -40,11 +45,10 @@ class SearchProblem:
         """
           state: Search state
 
-        For a given state, this should return a list of triples,
-        (successor, action, stepCost), where 'successor' is a
-        successor to the current state, 'action' is the action
-        required to get there, and 'stepCost' is the incremental
-        cost of expanding to that successor
+        For a given state, this should return a list of triples, (successor,
+        action, stepCost), where 'successor' is a successor to the current
+        state, 'action' is the action required to get there, and 'stepCost' is
+        the incremental cost of expanding to that successor.
         """
         util.raiseNotDefined()
 
@@ -52,67 +56,110 @@ class SearchProblem:
         """
          actions: A list of actions to take
 
-        This method returns the total cost of a particular sequence of actions.  The sequence must
-        be composed of legal moves
+        This method returns the total cost of a particular sequence of actions.
+        The sequence must be composed of legal moves.
         """
         util.raiseNotDefined()
 
 
 def tinyMazeSearch(problem):
+    """
+    Returns a sequence of moves that solves tinyMaze.  For any other maze, the
+    sequence of moves will be incorrect, so only use this for tinyMaze.
+    """
+    from game import Directions
     s = Directions.SOUTH
     w = Directions.WEST
-    return  [s,s,w,s,w,w,s,w]
+    return  [s, s, w, s, w, w, s, w]
 
 def depthFirstSearch(problem):
-    fringe = util.Stack()
-    fringe.push( (problem.getStartState(), [], []) )
-    while not fringe.isEmpty():
-        node, actions, visited = fringe.pop()
+    """
+    Search the deepest nodes in the search tree first.
 
-        for coord, direction, steps in problem.getSuccessors(node):
-            if not coord in visited:
-                if problem.isGoalState(coord):
-                    return actions + [direction]
-                fringe.push((coord, actions + [direction], visited + [node] ))
+    Your search algorithm needs to return a list of actions that reaches the
+    goal. Make sure to implement a graph search algorithm.
 
+    To get started, you might want to try some of these simple commands to
+    understand the search problem that is being passed in:
+
+    print "Start:", problem.getStartState()
+    print "Is the start a goal?", problem.isGoalState(problem.getStartState())
+    print "Start's successors:", problem.getSuccessors(problem.getStartState())
+    """
+
+    
+    s = util.Stack()
+    s.push((problem.getStartState(),[],[])) # Transition: <(x,y),route, visited>
+    while not s.isEmpty():
+        currentNode,route,visited = s.pop()
+        if (currentNode not in visited):
+            visited.append(currentNode)
+            if isGoalState(currentNode):
+                return route
+            
+            successors = problem.getSuccessors(currentNode) #A list of successors
+            for node in successors:
+                coor = node[0]
+                direction = node[1]
+                step = node[2]
+                if  coor not in visited:
+                    s.push((coor,route+[direction],visited+[currentNode]))
+        
     return []
+    util.raiseNotDefined()
 
 def breadthFirstSearch(problem):
-    fringe = util.Queue()
-    fringe.push( (problem.getStartState(), []) )
-
+    """Search the shallowest nodes in the search tree first."""
+    "*** YOUR CODE HERE ***"
+    
+    q = util.Queue()
+    q.push((problem.getStartState(), []))
     visited = []
-    while not fringe.isEmpty():
-        node, actions = fringe.pop()
-
-        for coord, direction, steps in problem.getSuccessors(node):
-            if not coord in visited:
-                if problem.isGoalState(coord):
-                    return actions + [direction]
-                fringe.push((coord, actions + [direction]))
-                visited.append(coord)
-
+    while not q.isEmpty():
+        currentNode,route = q.pop() #Get the first element in the queue
+        
+        successors = problem.getSuccessors(currentNode) #A list of successors
+        for node in successors:
+            coor = node[0]
+            direction = node[1]
+            step = node[2]
+            if not coor in visited:
+               if problem.isGoalState(coor):
+                   return route + [direction]
+               else:
+                   q.push((coor,route+[direction]))
+                   visited.append(currentNode)
     return []
+    
+    util.raiseNotDefined()
 
 def uniformCostSearch(problem):
-    fringe = util.PriorityQueue()
-    fringe.push( (problem.getStartState(), []), 0)
-    explored = []
-
-    while not fringe.isEmpty():
-        node, actions = fringe.pop()
-
-        if problem.isGoalState(node):
-            return actions
-
-        explored.append(node)
-
-        for coord, direction, steps in problem.getSuccessors(node):
-            if not coord in explored:
-                new_actions = actions + [direction]
-                fringe.push((coord, new_actions), problem.getCostOfActions(new_actions))
-
+    """Search the node of least total cost first."""
+    "*** YOUR CODE HERE ***"
+    pq = util.PriorityQueue()
+    pq.push((problem.getStartState(),[]),0)  # <(x,y),route>,cost
+    visited = []
+    
+    while not pq.isEmpty():
+        currentNode,route = pq.pop()
+        
+        #Check if the currentNode is goal, if it is, do not expand and return the route
+        if problem.isGoalState(currentNode):
+            return route
+        else:
+            visited.append(currentNode)
+        
+        successors = problem.getSuccessors(currentNode)
+        for node in successors:
+            coor = node[0]
+            direction = node[1]
+            step = node[2]
+            if coor not in visited:
+                pq.push((coor,route+[direction]),problem.getCostOfActions(route+[direction]))
+    
     return []
+                  
+    util.raiseNotDefined()
 
 def nullHeuristic(state, problem=None):
     """
@@ -122,26 +169,35 @@ def nullHeuristic(state, problem=None):
     return 0
 
 def aStarSearch(problem, heuristic=nullHeuristic):
-    closedset = []
-    fringe = util.PriorityQueue()
-    start = problem.getStartState()
-    fringe.push( (start, []), heuristic(start, problem))
-
-    while not fringe.isEmpty():
-        node, actions = fringe.pop()
-
-        if problem.isGoalState(node):
-            return actions
-
-        closedset.append(node)
-
-        for coord, direction, cost in problem.getSuccessors(node):
-            if not coord in closedset:
-                new_actions = actions + [direction]
-                score = problem.getCostOfActions(new_actions) + heuristic(coord, problem)
-                fringe.push( (coord, new_actions), score)
-
+    """Search the node that has the lowest combined cost and heuristic first."""
+    "*** YOUR CODE HERE ***"
+    pq = util.PriorityQueue()
+    pq.push((problem.getStartState(),[]),0)  # <(x,y),route>,cost
+    visited = []
+    
+    while not pq.isEmpty():
+        currentNode,route = pq.pop()
+        
+        #Check if the currentNode is goal, if it is, do not expand and return the route
+        if problem.isGoalState(currentNode):
+            return route
+        else:
+            visited.append(currentNode)
+        
+        successors = problem.getSuccessors(currentNode)
+        for node in successors:
+            coor = node[0]
+            direction = node[1]
+            step = node[2]
+            if coor not in visited:
+                h = heuristic(coor,problem) 
+                g = problem.getCostOfActions(route+[direction]) #Cost of getting to the successor
+                pq.push((coor,route+[direction]),h + g)
+    
     return []
+
+    util.raiseNotDefined()
+
 
 # Abbreviations
 bfs = breadthFirstSearch
